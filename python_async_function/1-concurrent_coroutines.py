@@ -10,7 +10,7 @@ from typing import List
 wait_random = __import__('0-basic_async_syntax').wait_random
 
 
-async def wait_n(n: int, max_delay: int = 10) -> List[float]:
+async def wait_n(n: int, max_delay: int) -> List[float]:
     """asynchronously wait up to max_delay seconds, n times"""
     if not isinstance(n, int):
         raise TypeError("n expected to be an int")
@@ -19,12 +19,10 @@ async def wait_n(n: int, max_delay: int = 10) -> List[float]:
 
     chosen_delays = []
     tasks = []
-    for i in range(0, n):
+    for _ in range(0, n):
         task = asyncio.create_task(wait_random(max_delay))
         tasks.append(task)
-        # chosen_delays.append(task)
-    # THIS won't work as intended since it just returns a list of tasks
-    # await asyncio.wait(chosen_delays)
+
     for task in asyncio.as_completed(tasks):
         chosen_delays.append(await task)
     return chosen_delays
