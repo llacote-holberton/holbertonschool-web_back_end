@@ -1,34 +1,15 @@
 #!/usr/bin/env python3
-"""Enhancing previous sleep example with ordered async repetition"""
-
-import random
+"""Exécution de multiples coroutines en parallèle avec asyncio"""
 import asyncio
 from typing import List
 
-# Cannot work because of '-' character
-# from 0-basic_async_syntax import wait_random
 wait_random = __import__('0-basic_async_syntax').wait_random
 
 
 async def wait_n(n: int, max_delay: int) -> List[float]:
-    """asynchronously wait up to max_delay seconds, n times"""
-
-    chosen_delays = []
-    tasks = []
-    for _ in range(0, n):
-        task = asyncio.create_task(wait_random(max_delay))
-        tasks.append(task)
-
-    for task in asyncio.as_completed(tasks):
-        chosen_delays.append(await task)
-    return chosen_delays
-
-
-# ===== Task instructions =====
-# Import wait_random from the previous python file that you've written
-#   and write an async routine called wait_n that takes in 2 int arguments
-#   (in this order): n and max_delay.
-# You will spawn wait_random n times with the specified max_delay.
-# Wait_n should return the list of all the delays (float values).
-# The list of the delays should be in ascending order without using sort()
-#   because of concurrency.
+    """Exécute wait_random n fois en parallèle et renvoie les délais triés"""
+    # On crée une liste de coroutines simples (sans create_task)
+    tasks = [wait_random(max_delay) for _ in range(n)]
+    
+    # asyncio.as_completed prend en charge la parallélisation et le tri naturel
+    return [await task for task in asyncio.as_completed(tasks)]
