@@ -1,0 +1,5 @@
+# Temporary files related to each programming language
+
+## Python related temp files (virtual env config)
+.python_version
+__pycache__
