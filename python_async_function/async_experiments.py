@@ -71,12 +71,44 @@ def run_sequential():
 
 async def main_concurrent():
     tasks = []
-    for i in range(5):
-        tasks.append(bigWork(i))
+    # WARNING from 3.8 onwards giving Coroutines and not Tasks
+    #   is deprecated. AND a STRICT ERROR from 3.14 onwards.
+    # for i in range(5):
+    #     # Calling bigwork returns a Coroutine, not a Task!
+    #     tasks.append(bigWork(i))
+    # await asyncio.wait(tasks)
 
-    # on attend que la liste
-    # de coroutines soit terminée
+    # Option 1: method gather() which accepts Coroutines
+    # my_coroutines = []
+    # for i in range(5):
+    #     my_coroutines.append(bigWork(i))
+    # # Gather expects positional arguments so we use list unpacking with '*'
+    # await asyncio.gather(*my_coroutines)
+    # # Gather automatically returns the list of result in same order as "input"
+
+    # Option 2: method create_task, encapsulates a Coroutine in a Task
+    tasks = []
+    for i in range(5):
+        tasks.append(asyncio.create_task(bigWork(i)))
     await asyncio.wait(tasks)
+
+
+"""
+    Differences (summarized) between COROUTINE and TASK
+    COROUTINE is technically a suspendable function which is paused immediately
+      after being "called".
+        With culinary metaphor it would be "a recipe".
+    TASK is an object representing the integration of the coroutine in a list
+      of instructions to execute, aka planning the actual execution of the
+      target function in the event loop managed by an orchestrator.
+        With culinary metaphor the event loop manager the "cook chief", and
+        the task would be a saucepan set to cook, with a ticket returned so the
+        waiter can track how it goes and when it finishes.
+    Oneliner: Coroutine is "WHAT TO DO",
+              Task is "WHEN AND HOW IT WILL/HAS BEEN DONE"
+    Which is why Task "encapsulates" Coroutine and not reverse, 
+    since it is Task which holds the "state info" on the process.
+"""
 
 
 @debug_display
@@ -84,7 +116,7 @@ async def main_concurrent():
 def run_concurrent():
     # "Manual time tracking" replaced by decorator
     # start = time.time()
-    asyncio.run(main_fully_sequential())  # on démarre ici
+    asyncio.run(main_concurrent())  # on démarre ici
     # end = time.time() - start
     # print('Total time: %.2f' % end)
 
