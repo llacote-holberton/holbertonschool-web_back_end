@@ -9,6 +9,7 @@ import time  # on s'en servira après
 #   decorator for timetracking.
 
 
+# ===== DECORATORS =====
 def track_runtime(func):
     """@decorator to track time spent to complete function call"""
     def wrapper(*args, **kwargs):
@@ -43,7 +44,9 @@ def debug_display(func):
     return wrapper
 
 
-# async => la fonction est une coroutine
+# ===== TUTO EXAMPLES ADAPTED =====
+
+# Defining a Coroutine subtype of function
 async def bigWork(i):
     print('Big work %d starts' % i)
     delay = random.uniform(0, 1.5)
@@ -55,7 +58,9 @@ async def bigWork(i):
     print('Big work %d ends after %.2f seconds' % (i, delay))
 
 
-# Async but fully sequential example
+# === Example 1: async but fully sequential
+
+# Because we use a for loop  which forcefully creates a sequence...
 async def main_fully_sequential():
     # on va lancer 5 coroutines
     for i in range(5):
@@ -67,6 +72,22 @@ def run_sequential():
     asyncio.run(main_fully_sequential())  # on démarre ici
     end = time.time() - start
     print('Total time: %.2f' % end)
+
+
+# === Example 2: async and "concurrent" through "cooperation"
+# With also examples of what NOT to do. ^^ŝ
+
+# WARNING: WILL RAISE EXCEPTION: SAME PROBLEM AS what was commented above
+async def faulty_main():
+    tasks = []
+    for i in range(5):
+        # We are actually adding Coroutines
+        tasks.append(bigWork(i))
+
+    for t in tasks:
+        # Coroutine is NOT an "Awaitable" object -> TypeError:
+        # An asyncio.Future, a coroutine or an awaitable is required
+        await t
 
 
 async def main_concurrent():
@@ -84,7 +105,7 @@ async def main_concurrent():
     #     my_coroutines.append(bigWork(i))
     # # Gather expects positional arguments so we use list unpacking with '*'
     # await asyncio.gather(*my_coroutines)
-    # # Gather automatically returns the list of result in same order as "input"
+    # # Gather automatically returns a list of results in same order as "input"
 
     # Option 2: method create_task, encapsulates a Coroutine in a Task
     tasks = []
@@ -106,7 +127,7 @@ async def main_concurrent():
         waiter can track how it goes and when it finishes.
     Oneliner: Coroutine is "WHAT TO DO",
               Task is "WHEN AND HOW IT WILL/HAS BEEN DONE"
-    Which is why Task "encapsulates" Coroutine and not reverse, 
+    Which is why Task "encapsulates" Coroutine and not reverse,
     since it is Task which holds the "state info" on the process.
 """
 
@@ -119,6 +140,26 @@ def run_concurrent():
     asyncio.run(main_concurrent())  # on démarre ici
     # end = time.time() - start
     # print('Total time: %.2f' % end)
+
+
+# === Example 3: "sequential mode", explicitely creating tasks ===
+async def main_explicit_sequential():
+    tasks = []
+    for i in range(5):
+        coroutine = bigWork(i)
+        # NOTE: create_task SCHEDULES the task to start, not immediately
+        #   (synchronously) *but* as soon as the event loop gets control back
+        #   (i.e. at the next `await`).
+        task = asyncio.create_task(coroutine)
+        tasks.append(task)
+    for t in tasks:
+        # Despite awaiting in order, the underlying tasks were ALL already
+        #   scheduled (via create_task) before this loop even started, so
+        #   they're running concurrently in the background. This loop just
+        #   controls the ORDER in which we retrieve results/exceptions,
+        #   not WHEN the work happens. Total time should be close to
+        #   main_concurrent's, NOT main_fully_sequential's.
+        await t
 
 
 @debug_display
