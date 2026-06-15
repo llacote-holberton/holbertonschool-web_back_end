@@ -12,10 +12,6 @@ wait_random = __import__('0-basic_async_syntax').wait_random
 
 async def wait_n(n: int, max_delay: int) -> List[float]:
     """asynchronously wait up to max_delay seconds, n times"""
-    if not isinstance(n, int):
-        raise TypeError("n expected to be an int")
-    if n < 0:
-        raise ValueError("n expected to be >=  0")
 
     chosen_delays = []
     tasks = []
